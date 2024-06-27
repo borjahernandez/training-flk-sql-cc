@@ -12,10 +12,10 @@
 		},
 		{
 			"type": "java",
-			"name": "Debug (Launch)-Producer<producer-user-actions>",
+			"name": "Debug (Launch)-Producer<java-producer-avro>",
 			"request": "launch",
 			"mainClass": "clients.Producer",
-			"projectName": "producer-user-actions"
+			"projectName": "java-producer-avro"
 		}
 	]
 }
