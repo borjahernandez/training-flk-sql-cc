@@ -1,50 +1,41 @@
 package clients;
 
-import clients.avro.PositionValue;
-
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.confluent.kafka.serializers.KafkaAvroSerializerConfig;
-import io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Properties;
+import java.time.Instant;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 public class Producer {
-  static final String DRIVER_FILE_PREFIX = "./drivers/";
-  static final String KAFKA_TOPIC = "driver-positions-avro";
+  static final String DATA = (System.getenv("DATA") != null) ? System.getenv("DATA") : "user_actions_1.csv";
+  static final String PROPERTIES_FILE = (System.getenv("PROPERTIES_FILE") != null) ? System.getenv("PROPERTIES_FILE") : "./java-producer.properties";
+  static final String KAFKA_TOPIC = (System.getenv("TOPIC") != null) ? System.getenv("TOPIC") : "user_actions";
 
   /**
    * Java producer.
    */
   public static void main(String[] args) throws IOException, InterruptedException {
+    clients.avro.key.record ActionsKey = new clients.avro.key.record();
+    clients.avro.value.record ActionsValue = new clients.avro.value.record();
     System.out.println("Starting Java Avro producer.");
-
-    // Load a driver id from an environment variable
-    // if it isn't present use "driver-1"
-    String driverId  = System.getenv("DRIVER_ID");
-    driverId = (driverId != null) ? driverId : "driver-1";
 
     // Configure the location of the bootstrap server, default serializers,
     // Confluent interceptors, schema registry location
-    final Properties settings = new Properties();
-    settings.put(ProducerConfig.CLIENT_ID_CONFIG, driverId);
-    settings.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
-    settings.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    final Properties settings = loadPropertiesFile();
+    settings.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-user-actions");
+    settings.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
     settings.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
-    settings.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://schema-registry:8081");
-    settings.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
-        List.of(MonitoringProducerInterceptor.class));
-  
-    final KafkaProducer<String, PositionValue> producer = new KafkaProducer<>(settings);
+    
+    final KafkaProducer<clients.avro.key.record, clients.avro.value.record> producer = new KafkaProducer<>(settings);
     
     // Adding a shutdown hook to clean up when the application exits
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -53,36 +44,36 @@ public class Producer {
     }));
 
     int pos = 0;
-    final String[] rows = Files.readAllLines(Paths.get(DRIVER_FILE_PREFIX + driverId + ".csv"),
+    final String[] rows = Files.readAllLines(Paths.get("./user-actions/" + DATA),
       Charset.forName("UTF-8")).toArray(new String[0]);
 
     // Loop forever over the driver CSV file..
-    while (true) {
-      final String key = driverId;
-      final Double latitude1 = Double.parseDouble(rows[pos].split(",")[0]);
-      final Double longitude1 = Double.parseDouble(rows[pos].split(",")[1]);
-      final PositionValue value = new PositionValue(latitude1, longitude1);
-      final ProducerRecord<String, PositionValue> record = new ProducerRecord<>(
+    for (int i = 0; i < rows.length; i++) {
+      final String user = rows[i].split(",")[0];
+      final String action = rows[i].split(",")[1];
+      final Instant timestamp = Instant.ofEpochMilli(Long.parseLong(rows[i].split(",")[2]));
+      final clients.avro.key.record key = new clients.avro.key.record(user);
+      final clients.avro.value.record value = new clients.avro.value.record(action, timestamp);
+      final ProducerRecord<clients.avro.key.record, clients.avro.value.record> record = new ProducerRecord<>(
           KAFKA_TOPIC, key, value);
       producer.send(record, (md, e) -> {
-        System.out.println(String.format("Sent Key:%s Latitude:%s Longitude:%s",
-            key, value.getLatitude(), value.getLongitude()));
+        System.out.println(String.format("Sent Key:%s user:%s action:%s timestamp:%s",
+            key, key.getUser(), value.getAction(), value.getTimestamp()));
       });
       Thread.sleep(1000);
-      pos = (pos + 1) % rows.length;
     }
 
-    /*
-    Confirm the topic is being written to with kafka-avro-console-consumer
-    
-    kafka-avro-console-consumer --bootstrap-server kafka:9092 \
-    --property schema.registry.url=http://schema-registry:8081 \
-    --topic driver-positions-avro --property print.key=true \
-    --key-deserializer=org.apache.kafka.common.serialization.StringDeserializer \
-    --from-beginning
+  }
 
-    curl schema-registry:8081/subjects/driver-positions-avro-value/versions/1
-    */
 
+  public static Properties loadPropertiesFile() throws IOException {
+    if (!Files.exists(Paths.get(PROPERTIES_FILE))) {
+      throw new IOException(PROPERTIES_FILE + " not found.");
+    }
+    final Properties properties = new Properties();
+    try (InputStream inputStream = new FileInputStream(PROPERTIES_FILE)) {
+      properties.load(inputStream);
+    }
+    return properties;
   }
 }
