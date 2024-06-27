@@ -16,11 +16,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class Producer {
-  static final String DATA = (System.getenv("DATA") != null) ? System.getenv("DATA") : "user_actions_3.csv";
+  static final String DATA = (System.getenv("DATA") != null) ? System.getenv("DATA") : "user_actions_1.csv";
   static final String PROPERTIES_FILE = (System.getenv("PROPERTIES_FILE") != null) ? System.getenv("PROPERTIES_FILE") : "./java-producer.properties";
-  static final String KAFKA_TOPIC = (System.getenv("TOPIC") != null) ? System.getenv("TOPIC") : "user_actions30";
-  static final int NUM_RECORDS = Integer.parseInt((System.getenv("NUM_RECORDS") != null) ? System.getenv("NUM_RECORDS") : "1000000");
-
+  static final String KAFKA_TOPIC = (System.getenv("TOPIC") != null) ? System.getenv("TOPIC") : "user_actions";
 
   /**
    * Java producer.
