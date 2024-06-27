@@ -1,0 +1,26 @@
+{
+  "fields": [
+    {
+      "default": null,
+      "name": "action",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "default": null,
+      "name": "timestamp",
+      "type": [
+        "null",
+        {
+          "logicalType": "timestamp-millis",
+          "type": "long"
+        }
+      ]
+    }
+  ],
+  "name": "ActionsValue",
+  "namespace": "clients.avro.value",
+  "type": "record"
+}
