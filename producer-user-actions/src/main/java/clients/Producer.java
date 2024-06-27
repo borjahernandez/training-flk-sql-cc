@@ -16,9 +16,11 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class Producer {
-  static final String DATA = (System.getenv("DATA") != null) ? System.getenv("DATA") : "user_actions_1.csv";
+  static final String DATA = (System.getenv("DATA") != null) ? System.getenv("DATA") : "user_actions_3.csv";
   static final String PROPERTIES_FILE = (System.getenv("PROPERTIES_FILE") != null) ? System.getenv("PROPERTIES_FILE") : "./java-producer.properties";
-  static final String KAFKA_TOPIC = (System.getenv("TOPIC") != null) ? System.getenv("TOPIC") : "user_actions";
+  static final String KAFKA_TOPIC = (System.getenv("TOPIC") != null) ? System.getenv("TOPIC") : "user_actions30";
+  static final int NUM_RECORDS = Integer.parseInt((System.getenv("NUM_RECORDS") != null) ? System.getenv("NUM_RECORDS") : "1000000");
+
 
   /**
    * Java producer.
@@ -57,11 +59,23 @@ public class Producer {
       final ProducerRecord<clients.avro.key.record, clients.avro.value.record> record = new ProducerRecord<>(
           KAFKA_TOPIC, key, value);
       producer.send(record, (md, e) -> {
-        System.out.println(String.format("Sent Key:%s user:%s action:%s timestamp:%s",
-            key, key.getUser(), value.getAction(), value.getTimestamp()));
+        System.out.println(String.format("Sent Key:%s Value:%s",
+            key, value));
       });
       Thread.sleep(1000);
     }
+
+    /*
+    Confirm the topic is being written to with kafka-avro-console-consumer
+    
+    kafka-avro-console-consumer --bootstrap-server kafka:9092 \
+    --property schema.registry.url=http://schema-registry:8081 \
+    --topic driver-positions-avro --property print.key=true \
+    --key-deserializer=org.apache.kafka.common.serialization.StringDeserializer \
+    --from-beginning
+
+    curl schema-registry:8081/subjects/driver-positions-avro-value/versions/1
+    */
 
   }
 
