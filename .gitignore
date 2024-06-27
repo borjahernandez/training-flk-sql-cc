@@ -37,4 +37,3 @@ terraform.rc
 .terraform*
 .DS_Store
 main copy
-*.vscode/
