@@ -1,0 +1,26 @@
+plugins {
+  id 'com.github.davidmc24.gradle.plugin.avro' version '1.2.0'
+  id 'java'
+  id 'application'
+}
+
+mainClassName = 'clients.Producer'
+
+repositories {
+    mavenCentral()
+    maven { url "http://packages.confluent.io/maven/" }
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+dependencies {
+    compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.6.0'
+    compile group: "io.confluent", name: "monitoring-interceptors", version: '6.0.0'
+
+    compile group: 'org.apache.avro', name: 'avro', version: '1.9.1'
+    compile group: 'org.apache.avro', name: 'avro-tools', version: '1.9.1'
+    compile group: 'io.confluent', name: 'kafka-avro-serializer', version: '6.0.0'
+
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.30'
+}
