@@ -57,10 +57,11 @@ public class Producer {
       final ProducerRecord<clients.avro.key.record, clients.avro.value.record> record = new ProducerRecord<>(
           KAFKA_TOPIC, key, value);
       producer.send(record, (md, e) -> {
+        System.out.println();
         System.out.println(String.format("Sent Key:%s Value:%s",
             key, value));
       });
-      Thread.sleep(1000);
+      Thread.sleep(2000);
     }
 
     /*

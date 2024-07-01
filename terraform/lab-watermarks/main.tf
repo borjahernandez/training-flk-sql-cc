@@ -64,6 +64,12 @@ resource "confluent_role_binding" "app-manager-watermarks-kafka-cluster-admin" {
   crn_pattern = confluent_kafka_cluster.basic.rbac_crn
 }
 
+resource "confluent_role_binding" "all-subjects-example-rb" {
+  principal   = "User:${confluent_service_account.app-manager-watermarks.id}"
+  role_name   = "DeveloperWrite"
+  crn_pattern = "${confluent_schema_registry_cluster.essentials.resource_name}/subject=*"
+}
+
 resource "confluent_api_key" "app-manager-watermarks-kafka-api-key" {
   display_name = "app-manager-watermarks-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-manager-watermarks' service account"
@@ -82,6 +88,7 @@ resource "confluent_api_key" "app-manager-watermarks-kafka-api-key" {
       id = confluent_environment.watermarks-env.id
     }
   }
+}
 
 
   resource "confluent_api_key" "app-manager-watermarks-schema-registry-api-key" {
@@ -95,15 +102,11 @@ resource "confluent_api_key" "app-manager-watermarks-kafka-api-key" {
 
   managed_resource {
     id          = confluent_schema_registry_cluster.essentials.id
-    api_version = onfluent_schema_registry_cluster.essentials.api_version
-    kind        = onfluent_schema_registry_cluster.essentials.kind
+    api_version = confluent_schema_registry_cluster.essentials.api_version
+    kind        = confluent_schema_registry_cluster.essentials.kind
 
     environment {
       id = confluent_environment.watermarks-env.id
-    }
-
-    lifecycle {
-      prevent_destroy = true
     }
   }
 
@@ -120,51 +123,6 @@ resource "confluent_api_key" "app-manager-watermarks-kafka-api-key" {
 }
 
 
-// Service account to perform a task within Confluent Cloud, such as executing a Flink statement
-resource "confluent_service_account" "statements-runner" {
-  display_name = "statements-runner"
-  description  = "Service account for running Flink Statements in 'watermarks-cluster' Kafka cluster"
-}
-
-resource "confluent_role_binding" "statements-runner-environment-admin" {
-  principal   = "User:${confluent_service_account.statements-runner.id}"
-  role_name   = "EnvironmentAdmin"
-  crn_pattern = confluent_environment.watermarks-env.resource_name
-}
-
-// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#assigner
-// https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html#submit-long-running-statements
-resource "confluent_role_binding" "app-manager-watermarks-assigner" {
-  principal   = "User:${confluent_service_account.app-manager-watermarks.id}"
-  role_name   = "Assigner"
-  crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=${confluent_service_account.statements-runner.id}"
-}
-
-// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkadmin
-resource "confluent_role_binding" "app-manager-watermarks-flink-developer" {
-  principal   = "User:${confluent_service_account.app-manager-watermarks.id}"
-  role_name   = "FlinkAdmin"
-  crn_pattern = confluent_environment.watermarks-env.resource_name
-}
-
-resource "confluent_api_key" "app-manager-watermarks-flink-api-key" {
-  display_name = "app-manager-watermarks-flink-api-key"
-  description  = "Flink API Key that is owned by 'app-manager-watermarks' service account"
-  owner {
-    id          = confluent_service_account.app-manager-watermarks.id
-    api_version = confluent_service_account.app-manager-watermarks.api_version
-    kind        = confluent_service_account.app-manager-watermarks.kind
-  }
-  managed_resource {
-    id          = data.confluent_flink_region.us-east-2.id
-    api_version = data.confluent_flink_region.us-east-2.api_version
-    kind        = data.confluent_flink_region.us-east-2.kind
-    environment {
-      id = confluent_environment.watermarks-env.id
-    }
-  }
-}
-
 data "confluent_flink_region" "us-east-2" {
   cloud   = "AWS"
   region  = "us-east-2"
@@ -179,10 +137,4 @@ resource "confluent_flink_compute_pool" "main" {
   environment {
     id = confluent_environment.watermarks-env.id
   }
-  depends_on = [
-    confluent_role_binding.statements-runner-environment-admin,
-    confluent_role_binding.app-manager-watermarks-assigner,
-    confluent_role_binding.app-manager-watermarks-flink-developer,
-    confluent_api_key.app-manager-watermarks-flink-api-key,
-  ]
 }
