@@ -146,7 +146,7 @@ resource "confluent_kafka_acl" "app-shoe-connector-describe-on-cluster" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "CLUSTER"
-  resource_name = confluent_kafka_cluster.basic.display_name
+  resource_name = "kafka-cluster"
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-shoe-connector.id}"
   host          = "*"
@@ -159,7 +159,7 @@ resource "confluent_kafka_acl" "app-shoe-connector-describe-on-cluster" {
   }
 }
 
-resource "confluent_kafka_acl" "app-shoe-connector-write-on-target-topic" {
+resource "confluent_kafka_acl" "app-shoe-products-connector-write-on-target-topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
@@ -177,7 +177,7 @@ resource "confluent_kafka_acl" "app-shoe-connector-write-on-target-topic" {
   }
 }
 
-resource "confluent_kafka_acl" "app-shoe-connector-write-on-target-topic" {
+resource "confluent_kafka_acl" "app-shoe-customers-connector-write-on-target-topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
@@ -195,7 +195,7 @@ resource "confluent_kafka_acl" "app-shoe-connector-write-on-target-topic" {
   }
 }
 
-resource "confluent_kafka_acl" "app-shoe-connector-write-on-target-topic" {
+resource "confluent_kafka_acl" "app-shoe-orders-connector-write-on-target-topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
@@ -234,13 +234,13 @@ resource "confluent_connector" "source_shoe_products" {
     "kafka.service.account.id" = confluent_service_account.app-shoe-connector.id
     "kafka.topic"              = confluent_kafka_topic.shoe_products.topic_name
     "output.data.format"       = "AVRO"
-    "quickstart"               = "SHOE_CLICKSTREAM"
+    "quickstart"               = "SHOES"
     "tasks.max"                = "1"
   }
 
   depends_on = [
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
-    confluent_kafka_acl.app-shoe-connector-write-on-target-topic,
+    confluent_kafka_acl.app-shoe-products-connector-write-on-target-topic,
   ]
 }
 
@@ -271,7 +271,7 @@ resource "confluent_connector" "source_shoe_customers" {
 
   depends_on = [
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
-    confluent_kafka_acl.app-shoe-connector-write-on-target-topic,
+    confluent_kafka_acl.app-shoe-customers-connector-write-on-target-topic,
   ]
 }
 
@@ -302,7 +302,7 @@ resource "confluent_connector" "source_shoe_orders" {
 
   depends_on = [
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
-    confluent_kafka_acl.app-shoe-connector-write-on-target-topic,
+    confluent_kafka_acl.app-shoe-orders-connector-write-on-target-topic,
   ]
 }
 
@@ -376,7 +376,7 @@ resource "confluent_flink_compute_pool" "main" {
 
 resource "confluent_flink_statement" "create-table-customers_keyed" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -411,7 +411,7 @@ resource "confluent_flink_statement" "create-table-customers_keyed" {
 
 resource "confluent_flink_statement" "insert-into-customers_keyed" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -443,7 +443,7 @@ resource "confluent_flink_statement" "insert-into-customers_keyed" {
 
 resource "confluent_flink_statement" "create-table-products_keyed" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -478,7 +478,7 @@ resource "confluent_flink_statement" "create-table-products_keyed" {
 
 resource "confluent_flink_statement" "insert-into-products_keyed" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -510,7 +510,7 @@ resource "confluent_flink_statement" "insert-into-products_keyed" {
 
 resource "confluent_flink_statement" "create-table-enriched" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -543,7 +543,7 @@ resource "confluent_flink_statement" "create-table-enriched" {
 
 resource "confluent_flink_statement" "insert-into-enriched" {
   organization {
-    id = confluent_organization.main
+    id = data.confluent_organization.main.id
   }
 
   environment {
@@ -572,4 +572,3 @@ resource "confluent_flink_statement" "insert-into-enriched" {
     confluent_flink_statement.create-table-enriched,
   ]
 }
-
