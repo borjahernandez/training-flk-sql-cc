@@ -524,7 +524,7 @@ resource "confluent_flink_statement" "create-table-enriched" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "CREATE TABLE shoe_orders_enriched_customer_product(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) WITH ('kafka.partitions' = '1', 'changelog.mode' = 'retract');"
+  statement  = "CREATE TABLE shoe_orders_enriched(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) WITH ('kafka.partitions' = '1', 'changelog.mode' = 'retract');"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
@@ -557,7 +557,7 @@ resource "confluent_flink_statement" "insert-into-enriched" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "INSERT INTO shoe_orders_enriched_customer_product(order_id, first_name, last_name, email, brand, `model`, sale_price, rating) SELECT so.order_id, sc.first_name, sc.last_name, sc.email, sp.brand, sp.`model`, sp.sale_price, sp.rating FROM shoe_orders so INNER JOIN shoe_customers_keyed sc  ON so.customer_id = sc.customer_id INNER JOIN shoe_products_keyed sp ON so.product_id = sp.product_id;"
+  statement  = "INSERT INTO shoe_orders_enriched(order_id, first_name, last_name, email, brand, `model`, sale_price, rating) SELECT so.order_id, sc.first_name, sc.last_name, sc.email, sp.brand, sp.`model`, sp.sale_price, sp.rating FROM shoe_orders so INNER JOIN shoe_customers_keyed sc  ON so.customer_id = sc.customer_id INNER JOIN shoe_products_keyed sp ON so.product_id = sp.product_id;"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
