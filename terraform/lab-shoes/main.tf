@@ -524,7 +524,7 @@ resource "confluent_flink_statement" "create-table-enriched" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "CREATE TABLE shoe_orders_enriched(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) WITH ('kafka.partitions' = '1', 'changelog.mode' = 'retract');"
+  statement  = "CREATE TABLE shoe_orders_enriched(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) WITH ('kafka.partitions' = '1');"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
