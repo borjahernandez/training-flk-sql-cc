@@ -507,3 +507,69 @@ resource "confluent_flink_statement" "alter_products_key_to_string" {
     confluent_connector.source_shoe_products,
   ]
 }
+
+resource "confluent_flink_statement" "alter_orders_watermark" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+
+  environment {
+    id = confluent_environment.joins-env.id
+  }
+
+  compute_pool {
+    id = confluent_flink_compute_pool.main.id
+  }
+
+  principal {
+    id = confluent_service_account.shoe-joins-statements-runner.id
+  }
+  statement  = "ALTER TABLE shoe_orders MODIFY WATERMARK FOR `ts` AS `ts`;"
+  properties = {
+    "sql.current-catalog"  = confluent_environment.joins-env.display_name
+    "sql.current-database" = confluent_kafka_cluster.basic.display_name
+  }
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
+
+  credentials {
+    key    = confluent_api_key.app-joins-manager-flink-api-key.id
+    secret = confluent_api_key.app-joins-manager-flink-api-key.secret
+  }
+  depends_on = [
+    confluent_flink_compute_pool.main,
+    confluent_connector.source_shoe_orders,
+  ]
+}
+
+resource "confluent_flink_statement" "alter_clickstream_watermark" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+
+  environment {
+    id = confluent_environment.joins-env.id
+  }
+
+  compute_pool {
+    id = confluent_flink_compute_pool.main.id
+  }
+
+  principal {
+    id = confluent_service_account.shoe-joins-statements-runner.id
+  }
+  statement  = "ALTER TABLE shoe_clickstream MODIFY WATERMARK FOR `ts` AS `ts`;"
+  properties = {
+    "sql.current-catalog"  = confluent_environment.joins-env.display_name
+    "sql.current-database" = confluent_kafka_cluster.basic.display_name
+  }
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
+
+  credentials {
+    key    = confluent_api_key.app-joins-manager-flink-api-key.id
+    secret = confluent_api_key.app-joins-manager-flink-api-key.secret
+  }
+  depends_on = [
+    confluent_flink_compute_pool.main,
+    confluent_connector.source_shoe_clickstream,
+  ]
+}
