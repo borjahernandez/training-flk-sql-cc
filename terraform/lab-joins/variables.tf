@@ -10,7 +10,7 @@ variable "confluent_cloud_api_secret" {
 }
 
 variable "confluent_cloud_provider" {
-  description = "Cloud Provider (AWS, GCP, Azure)"
+  description = "Cloud Provider (AWS, GCP, AZURE)"
   type        = string
 }
 
