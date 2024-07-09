@@ -102,6 +102,9 @@ resource "confluent_kafka_topic" "shoe_products" {
   topic_name         = "shoe_products"
   partitions_count   = 3
   rest_endpoint      = confluent_kafka_cluster.basic.rest_endpoint
+  config = {
+    "cleanup.policy" = "compact"
+  }
   credentials {
     key    = confluent_api_key.app-joins-manager-kafka-api-key.id
     secret = confluent_api_key.app-joins-manager-kafka-api-key.secret
@@ -115,6 +118,9 @@ resource "confluent_kafka_topic" "shoe_customers" {
   topic_name         = "shoe_customers"
   partitions_count   = 3
   rest_endpoint      = confluent_kafka_cluster.basic.rest_endpoint
+  config = {
+    "cleanup.policy" = "compact"
+  }
   credentials {
     key    = confluent_api_key.app-joins-manager-kafka-api-key.id
     secret = confluent_api_key.app-joins-manager-kafka-api-key.secret
@@ -405,16 +411,16 @@ resource "confluent_api_key" "app-joins-manager-flink-api-key" {
     kind        = confluent_service_account.app-joins-manager.kind
   }
   managed_resource {
-    id          = data.confluent_flink_region.us-east-2.id
-    api_version = data.confluent_flink_region.us-east-2.api_version
-    kind        = data.confluent_flink_region.us-east-2.kind
+    id          = data.confluent_flink_region.region.id
+    api_version = data.confluent_flink_region.region.api_version
+    kind        = data.confluent_flink_region.region.kind
     environment {
       id = confluent_environment.joins-env.id
     }
   }
 }
 
-data "confluent_flink_region" "us-east-2" {
+data "confluent_flink_region" "region" {
   cloud   = var.confluent_cloud_provider
   region  = var.confluent_cloud_region
 }
@@ -433,5 +439,71 @@ resource "confluent_flink_compute_pool" "main" {
     confluent_role_binding.app-joins-manager-assigner,
     confluent_role_binding.app-joins-manager-flink-developer,
     confluent_api_key.app-joins-manager-flink-api-key,
+  ]
+}
+
+resource "confluent_flink_statement" "alter_customers_key_to_string" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+
+  environment {
+    id = confluent_environment.joins-env.id
+  }
+
+  compute_pool {
+    id = confluent_flink_compute_pool.main.id
+  }
+
+  principal {
+    id = confluent_service_account.shoe-joins-statements-runner.id
+  }
+  statement  = "ALTER TABLE shoe_customers MODIFY (`key` STRING);"
+  properties = {
+    "sql.current-catalog"  = confluent_environment.joins-env.display_name
+    "sql.current-database" = confluent_kafka_cluster.basic.display_name
+  }
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
+
+  credentials {
+    key    = confluent_api_key.app-joins-manager-flink-api-key.id
+    secret = confluent_api_key.app-joins-manager-flink-api-key.secret
+  }
+  depends_on = [
+    confluent_flink_compute_pool.main,
+    confluent_connector.source_shoe_customers,
+  ]
+}
+
+resource "confluent_flink_statement" "alter_products_key_to_string" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+
+  environment {
+    id = confluent_environment.joins-env.id
+  }
+
+  compute_pool {
+    id = confluent_flink_compute_pool.main.id
+  }
+
+  principal {
+    id = confluent_service_account.shoe-joins-statements-runner.id
+  }
+  statement  = "ALTER TABLE shoe_products MODIFY (`key` STRING);"
+  properties = {
+    "sql.current-catalog"  = confluent_environment.joins-env.display_name
+    "sql.current-database" = confluent_kafka_cluster.basic.display_name
+  }
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
+
+  credentials {
+    key    = confluent_api_key.app-joins-manager-flink-api-key.id
+    secret = confluent_api_key.app-joins-manager-flink-api-key.secret
+  }
+  depends_on = [
+    confluent_flink_compute_pool.main,
+    confluent_connector.source_shoe_products,
   ]
 }
