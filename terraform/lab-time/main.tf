@@ -21,8 +21,8 @@ resource "confluent_environment" "training-env" {
 # Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
 # but you should to place both in the same cloud and region to restrict the fault isolation boundary.
 data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
   package = "ESSENTIALS"
 }
 
@@ -44,8 +44,8 @@ resource "confluent_schema_registry_cluster" "essentials" {
 resource "confluent_kafka_cluster" "basic" {
   display_name = "training-kafka"
   availability = "SINGLE_ZONE"
-  cloud        = "AWS"
-  region       = "us-east-2"
+  cloud        = var.confluent_cloud_provider
+  region       = var.confluent_cloud_region
   basic {}
   environment {
     id = confluent_environment.training-env.id
@@ -218,25 +218,25 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
     kind        = confluent_service_account.app-manager.kind
   }
   managed_resource {
-    id          = data.confluent_flink_region.us-east-2.id
-    api_version = data.confluent_flink_region.us-east-2.api_version
-    kind        = data.confluent_flink_region.us-east-2.kind
+    id          = data.confluent_flink_region.region.id
+    api_version = data.confluent_flink_region.region.api_version
+    kind        = data.confluent_flink_region.region.kind
     environment {
       id = confluent_environment.training-env.id
     }
   }
 }
 
-data "confluent_flink_region" "us-east-2" {
-  cloud   = "AWS"
-  region  = "us-east-2"
+data "confluent_flink_region" "region" {
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
 }
 
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
 resource "confluent_flink_compute_pool" "main" {
   display_name = "training-compute-pool"
-  cloud   = "AWS"
-  region  = "us-east-2"
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
   max_cfu      = 10
   environment {
     id = confluent_environment.training-env.id
