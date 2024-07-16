@@ -176,6 +176,7 @@ resource "confluent_connector" "source" {
   }
 
   depends_on = [
+    confluent_schema_registry_cluster.essentials,
     confluent_kafka_acl.app-connector-describe-on-cluster,
     confluent_kafka_acl.app-connector-write-on-target-topic,
   ]
