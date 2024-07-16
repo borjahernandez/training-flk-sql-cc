@@ -21,8 +21,8 @@ resource "confluent_environment" "shoe-env" {
 # Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
 # but you should to place both in the same cloud and region to restrict the fault isolation boundary.
 data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
   package = "ESSENTIALS"
 }
 
@@ -44,8 +44,8 @@ resource "confluent_schema_registry_cluster" "essentials" {
 resource "confluent_kafka_cluster" "basic" {
   display_name = "shoe-kafka"
   availability = "SINGLE_ZONE"
-  cloud        = "AWS"
-  region       = "us-east-2"
+  cloud        = var.confluent_cloud_provider
+  region       = var.confluent_cloud_region
   basic {}
   environment {
     id = confluent_environment.shoe-env.id
@@ -343,25 +343,25 @@ resource "confluent_api_key" "app-shoe-manager-flink-api-key" {
     kind        = confluent_service_account.app-shoe-manager.kind
   }
   managed_resource {
-    id          = data.confluent_flink_region.us-east-2.id
-    api_version = data.confluent_flink_region.us-east-2.api_version
-    kind        = data.confluent_flink_region.us-east-2.kind
+    id          = data.confluent_flink_region.region.id
+    api_version = data.confluent_flink_region.region.api_version
+    kind        = data.confluent_flink_region.region.kind
     environment {
       id = confluent_environment.shoe-env.id
     }
   }
 }
 
-data "confluent_flink_region" "us-east-2" {
-  cloud   = "AWS"
-  region  = "us-east-2"
+data "confluent_flink_region" "region" {
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
 }
 
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
 resource "confluent_flink_compute_pool" "main" {
   display_name = "shoe-compute-pool"
-  cloud   = "AWS"
-  region  = "us-east-2"
+  cloud   = var.confluent_cloud_provider
+  region  = var.confluent_cloud_region
   max_cfu      = 10
   environment {
     id = confluent_environment.shoe-env.id
@@ -395,7 +395,7 @@ resource "confluent_flink_statement" "create-table-customers_keyed" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
@@ -430,7 +430,7 @@ resource "confluent_flink_statement" "insert-into-customers_keyed" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
@@ -462,7 +462,7 @@ resource "confluent_flink_statement" "create-table-products_keyed" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
@@ -497,7 +497,7 @@ resource "confluent_flink_statement" "insert-into-products_keyed" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
@@ -529,7 +529,7 @@ resource "confluent_flink_statement" "create-table-enriched" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
@@ -562,7 +562,7 @@ resource "confluent_flink_statement" "insert-into-enriched" {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
   }
-  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.region.rest_endpoint
 
   credentials {
     key    = confluent_api_key.app-shoe-manager-flink-api-key.id
