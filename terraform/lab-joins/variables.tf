@@ -17,5 +17,4 @@ variable "confluent_cloud_provider" {
 variable "confluent_cloud_region" {
   description = "Cloud region ID based on the provider"
   type        = string
-  sensitive   = true
 }
