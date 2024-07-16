@@ -8,3 +8,13 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "confluent_cloud_provider" {
+  description = "Cloud Provider (AWS, GCP, AZURE)"
+  type        = string
+}
+
+variable "confluent_cloud_region" {
+  description = "Cloud region ID based on the provider"
+  type        = string
+}
