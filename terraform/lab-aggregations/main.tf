@@ -239,6 +239,7 @@ resource "confluent_connector" "source_shoe_products" {
   }
 
   depends_on = [
+    confluent_schema_registry_cluster.essentials,
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
     confluent_kafka_acl.app-shoe-products-connector-write-on-target-topic,
   ]
@@ -270,6 +271,7 @@ resource "confluent_connector" "source_shoe_customers" {
   }
 
   depends_on = [
+    confluent_schema_registry_cluster.essentials,
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
     confluent_kafka_acl.app-shoe-customers-connector-write-on-target-topic,
   ]
@@ -301,6 +303,7 @@ resource "confluent_connector" "source_shoe_orders" {
   }
 
   depends_on = [
+    confluent_schema_registry_cluster.essentials,
     confluent_kafka_acl.app-shoe-connector-describe-on-cluster,
     confluent_kafka_acl.app-shoe-orders-connector-write-on-target-topic,
   ]
