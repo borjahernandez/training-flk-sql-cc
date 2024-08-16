@@ -393,7 +393,7 @@ resource "confluent_flink_statement" "create-table-customers_keyed" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "CREATE TABLE shoe_customers_keyed (customer_id STRING,first_name STRING,last_name STRING,email STRING,PRIMARY KEY (customer_id) NOT ENFORCED) WITH ('kafka.partitions' = '1');"
+  statement  = "CREATE TABLE shoe_customers_keyed (customer_id STRING,first_name STRING,last_name STRING,email STRING,PRIMARY KEY (customer_id) NOT ENFORCED) DISTRIBUTED INTO 1 BUCKETS;"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
@@ -460,7 +460,7 @@ resource "confluent_flink_statement" "create-table-products_keyed" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "CREATE TABLE shoe_products_keyed(product_id STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE, PRIMARY KEY (product_id) NOT ENFORCED) WITH ('kafka.partitions' = '1');"
+  statement  = "CREATE TABLE shoe_products_keyed(product_id STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE, PRIMARY KEY (product_id) NOT ENFORCED) DISTRIBUTED INTO 1 BUCKETS;"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
@@ -527,7 +527,7 @@ resource "confluent_flink_statement" "create-table-enriched" {
   principal {
     id = confluent_service_account.shoe-statements-runner.id
   }
-  statement  = "CREATE TABLE shoe_orders_enriched(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) WITH ('kafka.partitions' = '1', 'changelog.mode' = 'retract');"
+  statement  = "CREATE TABLE shoe_orders_enriched(order_id INT, first_name STRING, last_name STRING, email STRING, brand STRING, `model` STRING, sale_price INT, rating DOUBLE) DISTRIBUTED INTO 1 BUCKETS WITH ('changelog.mode' = 'retract');"
   properties = {
     "sql.current-catalog"  = confluent_environment.shoe-env.display_name
     "sql.current-database" = confluent_kafka_cluster.basic.display_name
